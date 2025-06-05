@@ -1,0 +1,28 @@
+# Flask Framework and Extensions
+Flask==2.3.3
+Flask-SQLAlchemy==3.0.5
+Flask-Migrate==4.0.5
+Flask-CORS==4.0.0
+Flask-JWT-Extended==4.5.3
+
+# Database
+SQLAlchemy==2.0.23
+psycopg2-binary==2.9.9
+alembic==1.12.1
+
+# AI Integration
+google-generativeai==0.3.2
+
+# Authentication & Security
+PyJWT==2.8.0
+bcrypt==4.1.2
+Werkzeug==2.3.7
+
+# Environment & Configuration
+python-dotenv==1.0.0
+
+# Date/Time utilities
+python-dateutil==2.8.2
+
+# HTTP Requests (if needed for external APIs)
+requests==2.31.0
