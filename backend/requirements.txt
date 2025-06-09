@@ -26,3 +26,6 @@ python-dateutil==2.8.2
 
 # HTTP Requests (if needed for external APIs)
 requests==2.31.0
+
+# Other dependencies
+openai==0.27.8
