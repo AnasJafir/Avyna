@@ -15,7 +15,8 @@ recommendations_bp = Blueprint('recommendations', __name__)
 @jwt_required
 def get_recommendation(log_id):
     """
-    Returns the AI recommendation for a given symptom log.
+    Returns the AI recommendation for a given symptom log,
+    including a markdown-formatted version dynamically assembled.
 
     Args:
         log_id (int): ID of the symptom log to retrieve the recommendation for
@@ -27,6 +28,7 @@ def get_recommendation(log_id):
                     "diet": str,
                     "exercise": str,
                     "wellness": str,
+                    "markdown": str,
                     "generated_at": str (ISO-formatted datetime)
                 }
             }
@@ -42,10 +44,22 @@ def get_recommendation(log_id):
     if not recommendation:
         return jsonify({"error": "No recommendation found for this symptom log"}), 404
 
+    # Generate markdown dynamically (clean and safe)
+    markdown = f"""### 🥗 Diet
+{recommendation.diet}
+
+### 🏃 Exercise
+{recommendation.exercise}
+
+### 🧘 Wellness
+{recommendation.wellness}"""
+
     data = {
         "diet": recommendation.diet,
         "exercise": recommendation.exercise,
         "wellness": recommendation.wellness,
+        "markdown": markdown,
         "generated_at": recommendation.generated_at.isoformat()
     }
+
     return jsonify({"recommendation": data}), 200
