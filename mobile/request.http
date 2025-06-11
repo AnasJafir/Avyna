@@ -1,5 +1,5 @@
 ### Register
-POST https://avyna-production.up.railway.app/api/auth/register
+POST {{EXPO_PUBLIC_BASE_URL}}/auth/register
 Content-Type: application/json
 
 {
@@ -8,7 +8,7 @@ Content-Type: application/json
 }
 
 ### Login
-POST https://avyna-production.up.railway.app/api/auth/login
+POST {{EXPO_PUBLIC_BASE_URL}}/auth/login
 Content-Type: application/json
 
 {
@@ -16,10 +16,16 @@ Content-Type: application/json
   "password": "password"
 }
 
+# @lang=lua
+> {%
+local json = vim.json.decode(response.body)
+client.global.set("token", json.token);
+%}
+
 ### Symptoms
-POST https://avyna-production.up.railway.app/api/symptoms/
+POST {{EXPO_PUBLIC_BASE_URL}}/symptoms/
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo2LCJleHAiOjE3NDk2NzAyNDh9.gPgCUul4PW9PeEC0dqOThHzcmZBq-uiHTUMOlpGm1Ro
+Authorization: Bearer {{token}}
 
 {
   "user_id": 7,
@@ -32,6 +38,6 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo2LCJle
 }
 
 ### Recommendations
-GET https://avyna-production.up.railway.app/api/recommendations/12
+GET {{EXPO_PUBLIC_BASE_URL}}/recommendations/11
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo2LCJleHAiOjE3NDk2NzAyNDh9.gPgCUul4PW9PeEC0dqOThHzcmZBq-uiHTUMOlpGm1Ro
+Authorization: Bearer {{token}}
