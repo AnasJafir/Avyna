@@ -1,0 +1,53 @@
+{
+  "expo": {
+    "name": "avyna",
+    "slug": "avyna",
+    "version": "1.0.0",
+    "scheme": "avyna",
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#9942F0",
+          "image": "./assets/splash.png",
+          "resizeMode": "contain",
+          "dark": {
+            "image": "./assets/splash.png",
+            "backgroundColor": "#9942F0"
+          },
+          "width": 200
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "tsconfigPaths": true
+    },
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "icon": {
+        "dark": "./assets/appstore.png",
+        "light": "./assets/appstore.png",
+        "tinted": "./assets/appstore.png"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#fff"
+      },
+      "package": "com.mrlectus.avyna"
+    }
+  }
+}
