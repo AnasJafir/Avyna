@@ -13,9 +13,13 @@ export default function Layout() {
   const [loaded] = useFonts({
     Inter: require('@tamagui/font-inter/otf/Inter-Medium.otf'),
     InterBold: require('@tamagui/font-inter/otf/Inter-Bold.otf'),
-    Space: require('@expo-google-fonts/space-grotesk/400Regular/SpaceGrotesk_400Regular.ttf'),
-    SpaceMedium: require('@expo-google-fonts/space-grotesk/500Medium/SpaceGrotesk_500Medium.ttf'),
-    SpaceBold: require('@expo-google-fonts/space-grotesk/700Bold/SpaceGrotesk_700Bold.ttf'),
+    Manrope: require('@expo-google-fonts/manrope/200ExtraLight/Manrope_200ExtraLight.ttf'),
+    ManropeLight: require('@expo-google-fonts/manrope/300Light/Manrope_300Light.ttf'),
+    ManropeRegular: require('@expo-google-fonts/manrope/400Regular/Manrope_400Regular.ttf'),
+    ManropeMedium: require('@expo-google-fonts/manrope/500Medium/Manrope_500Medium.ttf'),
+    ManropeSemiBold: require('@expo-google-fonts/manrope/600SemiBold/Manrope_600SemiBold.ttf'),
+    ManropeBold: require('@expo-google-fonts/manrope/700Bold/Manrope_700Bold.ttf'),
+    ManropeExtraBold: require('@expo-google-fonts/manrope/800ExtraBold/Manrope_800ExtraBold.ttf'),
   });
 
   const onBoard = useOnboardStore();

@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import Markdown, { MarkdownIt } from '@ronradtke/react-native-markdown-display';
-import { SizableText, View, XStack, YStack } from 'tamagui';
+import { ScrollView, SizableText, View, XStack, YStack } from 'tamagui';
 
 export const AIRecommend = ({
   headerText,
@@ -30,28 +30,24 @@ export const AIRecommend = ({
           justifyContent="center">
           {icon}
         </View>
-        <YStack>
+        <YStack flex={1}>
           <SizableText size={'$5'} fontWeight={'700'} color={'#141217'}>
             {title}
           </SizableText>
-          <Markdown
-            markdownit={MarkdownIt({ typographer: true }).disable(['image'])}
-            style={{
-              body: {
-                textOverflow: 'ellipsis',
-                overflow: 'hidden',
-                width: '91%',
-                display: 'flex',
-                color: '#75618A',
-                fontSize: 14,
-                textAlign: 'auto',
-                justifyContent: 'center',
-                alignItems: 'center',
-                fontFamily: 'Space',
-              },
-            }}>
-            {content!}
-          </Markdown>
+          <ScrollView contentInsetAdjustmentBehavior="automatic" marginTop={'$2'}>
+            <Markdown
+              style={{
+                body: {
+                  display: 'flex',
+                  color: '#75618A',
+                  fontSize: 15,
+                  textAlign: 'auto',
+                  fontFamily: 'ManropeRegular',
+                },
+              }}>
+              {content!}
+            </Markdown>
+          </ScrollView>
         </YStack>
       </XStack>
     </YStack>

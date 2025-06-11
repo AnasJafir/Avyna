@@ -45,8 +45,19 @@ const symptomsSchema = z.object({
     .transform((x) => (x ? 'Bloating' : ''))
     .optional(),
   painLevel: z.array(z.number()),
-  mood: z.string(),
-  cycleDay: z.coerce.number(),
+  mood: z
+    .string({
+      required_error: 'Mood is required',
+    })
+    .min(1, 'Mood is required'),
+  cycleDay: z.coerce
+    .number({
+      invalid_type_error: 'Cycle Day must be a number',
+      required_error: 'Cycle Day is required',
+    })
+    .refine((value) => value >= 1 && value <= 31, {
+      message: 'Cycle Day must be between 1 and 31',
+    }),
   notes: z.string().optional(),
 });
 
@@ -103,11 +114,11 @@ const Track = () => {
   return (
     <ScrollView backgroundColor={'#fff'} flex={1}>
       <View paddingHorizontal={'$4'} gap={'$1'}>
-        <SizableText fontWeight={500} fontSize={'$4'}>
+        <SizableText fontWeight={'$6'} fontSize={'$4'}>
           Today&apos;s Symptoms
         </SizableText>
         <Form gap={'$3'} onSubmit={onSubmit}>
-          <View gap={3}>
+          <View gap={1}>
             <XStack>
               <Controller
                 control={form.control}
@@ -211,8 +222,12 @@ const Track = () => {
           </View>
           <YStack gap={'$3'}>
             <XStack justifyContent="space-between">
-              <SizableText size={'$3'}>Pain Level (1-10)</SizableText>
-              <SizableText size={'$3'}>{form.watch('painLevel')}</SizableText>
+              <SizableText size={'$3'} fontWeight={'$6'}>
+                Pain Level (1-10)
+              </SizableText>
+              <SizableText size={'$3'} fontWeight={'$6'}>
+                {form.watch('painLevel')}
+              </SizableText>
             </XStack>
             <XStack paddingHorizontal={'$2'}>
               <Controller
@@ -222,7 +237,7 @@ const Track = () => {
                   return (
                     <Slider
                       flex={1}
-                      defaultValue={[1]}
+                      defaultValue={[0]}
                       marginHorizontal={'$1'}
                       max={10}
                       step={1}
@@ -241,7 +256,9 @@ const Track = () => {
           </YStack>
           <YStack gap={'$3'}>
             <YStack>
-              <SizableText size={'$3'}>Mood</SizableText>
+              <SizableText size={'$3'} fontWeight={'$6'}>
+                Mood
+              </SizableText>
               <XStack backgroundColor={'white'}>
                 <Controller
                   control={form.control}
@@ -264,9 +281,17 @@ const Track = () => {
                   }}
                 />
               </XStack>
+
+              {form.formState.errors.mood ? (
+                <SizableText size={'$1'} backgroundColor={'white'} color={'red'}>
+                  {form.formState.errors.mood.message}
+                </SizableText>
+              ) : null}
             </YStack>
             <YStack gap={'$1'}>
-              <SizableText size={'$3'}>Cycle Information</SizableText>
+              <SizableText size={'$3'} fontWeight={'$6'}>
+                Cycle Day
+              </SizableText>
               <XStack backgroundColor={'white'}>
                 <Controller
                   control={form.control}
@@ -290,6 +315,12 @@ const Track = () => {
                 />
               </XStack>
             </YStack>
+            {form.formState.errors.cycleDay ? (
+              <SizableText size={'$1'} backgroundColor={'white'} color={'red'}>
+                {form.formState.errors.cycleDay.message}
+              </SizableText>
+            ) : null}
+
             <XStack backgroundColor={'white'} marginTop={'$3'}>
               <Controller
                 control={form.control}

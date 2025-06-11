@@ -4,6 +4,7 @@
     "": {
       "name": "avyna",
       "dependencies": {
+        "@expo-google-fonts/manrope": "^0.4.1",
         "@expo-google-fonts/space-grotesk": "^0.4.0",
         "@expo/vector-icons": "^14.0.0",
         "@hookform/resolvers": "^5.1.0",
@@ -325,6 +326,8 @@
     "@eslint/object-schema": ["@eslint/object-schema@2.1.6", "", {}, "sha512-RBMg5FRL0I0gs51M/guSAj5/e14VQ4tpZnQNWwuDT66P14I43ItmPfIZRhO9fUVIPOAQXU47atlywZ/czoqFPA=="],
 
     "@eslint/plugin-kit": ["@eslint/plugin-kit@0.3.1", "", { "dependencies": { "@eslint/core": "^0.14.0", "levn": "^0.4.1" } }, "sha512-0J+zgWxHN+xXONWIyPWKFMgVuJoZuGiIFu8yxk7RJjxkzpGmyja5wRFqZIVtjDVOQpV+Rw0iOAjYPE2eQyjr0w=="],
+
+    "@expo-google-fonts/manrope": ["@expo-google-fonts/manrope@0.4.1", "", {}, "sha512-3Ydkj5dS4M6/xgjk7UT/+9wq1xnqo2LO9E5K/EIaynY2phJOGwFzvtAE9EEImqXj96TEg2jzZ095Mmac5w8nvQ=="],
 
     "@expo-google-fonts/space-grotesk": ["@expo-google-fonts/space-grotesk@0.4.0", "", {}, "sha512-AwxzX8sbcy9QiYkJwc3pKgpMkHB/himJfcZNEl/a/KvGIra9CewPmBs/zwMYcWt8SsNMslqfeLy5NFeJtf8Ixg=="],
 

@@ -1,0 +1,37 @@
+### Register
+POST https://avyna-production.up.railway.app/api/auth/register
+Content-Type: application/json
+
+{
+  "email": "example4@gmail.com",
+  "password": "password"
+}
+
+### Login
+POST https://avyna-production.up.railway.app/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "example4@gmail.com",
+  "password": "password"
+}
+
+### Symptoms
+POST https://avyna-production.up.railway.app/api/symptoms/
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo2LCJleHAiOjE3NDk2NzAyNDh9.gPgCUul4PW9PeEC0dqOThHzcmZBq-uiHTUMOlpGm1Ro
+
+{
+  "user_id": 7,
+  "condition":"Maleria and Typhod",
+  "symptoms":"Body weekness",
+  "pain_level": 7,
+  "mood":"moody",
+  "cycle_day": 4,
+  "notes":""
+}
+
+### Recommendations
+GET https://avyna-production.up.railway.app/api/recommendations/12
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo2LCJleHAiOjE3NDk2NzAyNDh9.gPgCUul4PW9PeEC0dqOThHzcmZBq-uiHTUMOlpGm1Ro

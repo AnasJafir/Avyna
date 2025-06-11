@@ -11,7 +11,7 @@ const AuthLayout = () => {
           headerTransparent: true,
           headerTitle: 'Sign In',
           headerTitleStyle: {
-            fontFamily: 'SpaceBold',
+            fontFamily: 'ManropeBold',
           },
           headerTitleAlign: 'center',
         }}
@@ -23,7 +23,7 @@ const AuthLayout = () => {
           headerTransparent: true,
           headerTitle: 'Sign Up',
           headerTitleStyle: {
-            fontFamily: 'SpaceBold',
+            fontFamily: 'ManropeBold',
           },
           headerTitleAlign: 'center',
         }}
