@@ -1,0 +1,43 @@
+### Register
+POST {{EXPO_PUBLIC_BASE_URL}}/auth/register
+Content-Type: application/json
+
+{
+  "email": "example4@gmail.com",
+  "password": "password"
+}
+
+### Login
+POST {{EXPO_PUBLIC_BASE_URL}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "example4@gmail.com",
+  "password": "password"
+}
+
+# @lang=lua
+> {%
+local json = vim.json.decode(response.body)
+client.global.set("token", json.token);
+%}
+
+### Symptoms
+POST {{EXPO_PUBLIC_BASE_URL}}/symptoms/
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "user_id": 7,
+  "condition":"Maleria and Typhod",
+  "symptoms":"Body weekness",
+  "pain_level": 7,
+  "mood":"moody",
+  "cycle_day": 4,
+  "notes":""
+}
+
+### Recommendations
+GET {{EXPO_PUBLIC_BASE_URL}}/recommendations/11
+Content-Type: application/json
+Authorization: Bearer {{token}}

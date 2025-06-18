@@ -18,7 +18,7 @@ export default function Home() {
           },
           tabBarLabelStyle: {
             color: '#AF73EA',
-            fontFamily: 'SpaceBold',
+            fontFamily: 'ManropeBold',
             fontSize: 12,
             textAlign: 'center',
           },

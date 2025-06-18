@@ -20,7 +20,7 @@ const TrackLayout = () => {
           headerShadowVisible: false,
           headerBackVisible: true,
           headerTitleStyle: {
-            fontFamily: 'SpaceBold',
+            fontFamily: 'ManropeSemiBold',
           },
         }}
       />

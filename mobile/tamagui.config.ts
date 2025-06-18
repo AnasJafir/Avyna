@@ -13,8 +13,8 @@ import {
   Button as ButtonTamagui,
 } from 'tamagui';
 
-const spaceFont = createFont({
-  family: isWeb ? 'Helvetica, Arial, sans-serif' : 'Space',
+const manRope = createFont({
+  family: isWeb ? 'Helvetica, Arial, sans-serif' : 'ManropeRegular',
   size: {
     1: 12,
     2: 14,
@@ -51,9 +51,12 @@ const spaceFont = createFont({
   },
   // (native only) swaps out fonts by face/style
   face: {
-    400: { normal: 'Space' },
-    500: { normal: 'SpaceMedium' },
-    700: { normal: 'SpaceBold' },
+    200: { normal: 'Manrope' },
+    300: { normal: 'ManropeLight' },
+    400: { normal: 'ManropeRegular' },
+    500: { normal: 'ManropeMedium' },
+    600: { normal: 'ManropeSemiBold' },
+    700: { normal: 'ManropeExtraBold' },
   },
 });
 const animations = createAnimations({
@@ -135,8 +138,8 @@ const myConfig = createTamagui({
   themeClassNameOnRoot: true,
   shorthands,
   fonts: {
-    body: spaceFont,
-    heading: spaceFont,
+    body: manRope,
+    heading: manRope,
   },
   themes,
   tokens,
