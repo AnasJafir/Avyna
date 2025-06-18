@@ -37,9 +37,11 @@ def create_app():
     from app.routes.auth import auth_bp
     from app.routes.symptoms import symptoms_bp
     from app.routes.recommendations import recommendations_bp
+    from app.routes.profile import profile_bp
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
     app.register_blueprint(symptoms_bp, url_prefix="/api/symptoms")
     app.register_blueprint(recommendations_bp, url_prefix="/api/recommendations")
+    app.register_blueprint(profile_bp, url_prefix="/api/profile")
 
     # --- Create database tables if not exist ---
     with app.app_context():
