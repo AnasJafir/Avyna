@@ -10,7 +10,8 @@ const TrackLayout = () => {
       <Stack.Screen
         name="index"
         options={{
-          headerShown: false,
+          headerTitle: 'Profile',
+          headerTitleAlign: 'center',
         }}
       />
       <Stack.Screen

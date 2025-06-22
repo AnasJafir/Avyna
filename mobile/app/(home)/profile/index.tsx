@@ -56,9 +56,9 @@ const Profile = () => {
         backgroundColor={'white'}
         flex={1}>
         <View>
-          <SizableText fontSize={20} fontWeight={'700'}>
-            Personal Information
-          </SizableText>
+          {/* <SizableText fontSize={20} fontWeight={'700'}> */}
+          {/*   Personal Information */}
+          {/* </SizableText> */}
           <View justifyContent="center" alignItems="center" marginTop={'$4'}>
             <YStack gap={'$5'}>
               <Avatar circular size={'$12'}>

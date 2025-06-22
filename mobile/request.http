@@ -3,7 +3,8 @@ POST {{EXPO_PUBLIC_BASE_URL}}/auth/register
 Content-Type: application/json
 
 {
-  "email": "example4@gmail.com",
+  "email": "example40@gmail.com",
+  "full_name": "James Brown",
   "password": "password"
 }
 
@@ -12,7 +13,7 @@ POST {{EXPO_PUBLIC_BASE_URL}}/auth/login
 Content-Type: application/json
 
 {
-  "email": "example4@gmail.com",
+  "email": "example40@gmail.com",
   "password": "password"
 }
 
@@ -22,6 +23,11 @@ local json = vim.json.decode(response.body)
 client.global.set("token", json.token);
 %}
 
+### Profile
+GET {{EXPO_PUBLIC_BASE_URL}}/profile/
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
 ### Symptoms
 POST {{EXPO_PUBLIC_BASE_URL}}/symptoms/
 Content-Type: application/json
@@ -29,7 +35,7 @@ Authorization: Bearer {{token}}
 
 {
   "user_id": 7,
-  "condition":"Maleria and Typhod",
+  "condition":"PCOS",
   "symptoms":"Body weekness",
   "pain_level": 7,
   "mood":"moody",

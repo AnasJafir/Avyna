@@ -1,10 +1,7 @@
-import { Redirect, Tabs, useSegments } from 'expo-router';
+import { Redirect, Tabs } from 'expo-router';
 import { Octicons, Foundation, AntDesign, Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '~/store/store';
-const headerToHide = Object.freeze(['[log_id]', 'change-password']);
 export default function Home() {
-  const segment = useSegments();
-  const lastSegment = segment[segment.length - 1];
   const user = useAuthStore();
   if (!user.user) {
     return <Redirect href={'/login'} />;
@@ -49,7 +46,7 @@ export default function Home() {
             ),
             headerTitleAlign: 'center',
             headerShadowVisible: false,
-            headerShown: headerToHide.includes(lastSegment) ? false : true,
+            headerShown: false,
             headerTitle: 'Track Symptoms',
             tabBarLabel: 'Track',
           }}
@@ -90,7 +87,7 @@ export default function Home() {
             headerShadowVisible: false,
             headerTitle: 'Profile',
             tabBarLabel: 'Profile',
-            headerShown: headerToHide.includes(lastSegment) ? false : true,
+            headerShown: false,
           }}
         />
       </Tabs>

@@ -9,9 +9,7 @@ const TrackLayout = () => {
     <Stack>
       <Stack.Screen
         name="index"
-        options={{
-          headerShown: false,
-        }}
+        options={{ headerTitle: 'Track Symptoms', headerTitleAlign: 'center' }}
       />
       <Stack.Screen
         name="[log_id]/index"
