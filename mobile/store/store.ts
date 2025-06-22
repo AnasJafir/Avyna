@@ -2,23 +2,28 @@ import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
 import { mmkvStorage } from '~/lib/storage';
+import { EnumProfile, User } from '~/types';
+
+type EditProfile = {
+  showProfile: EnumProfile;
+  setShowProfile: (value: EnumProfile) => void;
+};
 
 type OnBoardState = {
   hasSeen: boolean | undefined;
   setHasSeen: (value: boolean) => void;
 };
 
-type AppState = {
-  count: number;
-  increment: () => void;
-  decrement: () => void;
-};
-
 type AuthState = {
-  user: { token: string } | undefined | null;
-  setUser: (user: { token: string }) => void;
+  user: User | undefined | null;
+  setUser: (user: User) => void;
   deleteUser: () => void;
 };
+
+export const useEditProfileStore = create<EditProfile>()((set) => ({
+  showProfile: EnumProfile.Profile,
+  setShowProfile: (value: EnumProfile) => set(() => ({ showProfile: value })),
+}));
 
 export const useOnboardStore = create<OnBoardState>()(
   persist(
