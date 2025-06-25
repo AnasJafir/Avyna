@@ -3,6 +3,7 @@ from app.utils.auth_decorator import jwt_required
 from app import db
 from app.models.symptom_log import SymptomLog
 from app.models.ai_recommendation import AIRecommendation
+from app.models.user import User
 from datetime import datetime
 import google.generativeai as genai
 import openai
@@ -13,37 +14,24 @@ symptoms_bp = Blueprint('symptoms', __name__)
 def generate_ai_recommendation_for_log(log):
     """
     Generate a recommendation for a user's symptom log using the Gemini AI model.
+    Now includes user profile information for more personalized recommendations.
     If the AI fails, fallback content will be used. The result includes a Markdown version.
     """
     try:
+        # Get user profile information
+        user = User.query.get(log.user_id)
+        if not user:
+            current_app.logger.error(f"User not found for log ID: {log.id}")
+            return generate_fallback_recommendation(log)
+
         # Initialize Gemini
         gemini_api_key = current_app.config.get('GEMINI_API_KEY')
         genai.configure(api_key=gemini_api_key)
 
         model = genai.GenerativeModel('gemini-2.0-flash')
 
-        prompt = f"""You are a medical assistant helping users with PCOS and endometriosis. 
-
-User reported the following symptoms:
-- Condition: {log.condition}
-- Symptoms: {log.symptoms}
-- Pain level: {log.pain_level}/10
-- Mood: {log.mood}
-- Cycle day: {log.cycle_day}
-
-Based on this, provide a concise recommendation in three categories with clear markdown formatting:
-
-## Diet
-[Provide specific dietary recommendations with bullet points]
-
-## Exercise
-[Provide specific exercise recommendations with bullet points]
-
-## Wellness Tips
-[Provide specific wellness recommendations with bullet points]
-
-Please format your response using proper markdown with headers (##) and bullet points (-) for each recommendation.
-"""
+        # Build comprehensive prompt with profile information
+        prompt = build_personalized_prompt(log, user)
 
         response = model.generate_content(prompt)
 
@@ -54,7 +42,7 @@ Please format your response using proper markdown with headers (##) and bullet p
 
     except Exception as e:
         current_app.logger.error(f"Gemini API error: {e}")
-        return generate_fallback_recommendation(log)
+        return generate_fallback_recommendation(log, user)
 
     try:
         parsed = parse_ai_response_to_markdown(content)
@@ -89,7 +77,87 @@ Please format your response using proper markdown with headers (##) and bullet p
 
     except Exception as e:
         current_app.logger.error(f"Failed to parse or save Gemini recommendation: {e}")
-        return generate_fallback_recommendation(log)
+        return generate_fallback_recommendation(log, user)
+
+
+def build_personalized_prompt(log, user):
+    """
+    Build a comprehensive prompt that includes both symptom log and user profile information.
+    """
+    # Base symptom information
+    prompt = f"""You are a medical assistant specializing in women's health, particularly PCOS and endometriosis. 
+
+SYMPTOM LOG INFORMATION:
+- Condition: {log.condition}
+- Symptoms: {log.symptoms}
+- Pain level: {log.pain_level}/10
+- Mood: {log.mood}
+- Cycle day: {log.cycle_day}
+- Additional notes: {log.notes or 'None'}
+
+USER PROFILE INFORMATION:
+"""
+
+    # Add age-specific considerations
+    if user.age:
+        prompt += f"- Age: {user.age} years\n"
+        if user.age < 20:
+            prompt += "  → Focus on gentle, age-appropriate recommendations for teenage health\n"
+        elif user.age >= 40:
+            prompt += "  → Consider perimenopause/menopause factors and age-related health needs\n"
+    else:
+        prompt += "- Age: Not specified\n"
+
+    # Add PCOS-specific information
+    if user.has_pcos is True:
+        prompt += "- CONFIRMED PCOS diagnosis\n"
+        prompt += "  → Prioritize insulin resistance management, anti-inflammatory approaches\n"
+    elif user.has_pcos is False:
+        prompt += "- No PCOS diagnosis\n"
+    else:
+        prompt += "- PCOS status: Unknown/Not specified\n"
+
+    # Add Endometriosis-specific information
+    if user.has_endometriosis is True:
+        prompt += "- CONFIRMED Endometriosis diagnosis\n"
+        prompt += "  → Focus on anti-inflammatory diet, pain management, gentle exercise\n"
+    elif user.has_endometriosis is False:
+        prompt += "- No Endometriosis diagnosis\n"
+    else:
+        prompt += "- Endometriosis status: Unknown/Not specified\n"
+
+    # Add subscription-based personalization
+    if user.subscription_plan == 'paid':
+        prompt += "- Subscription: Premium user\n"
+        prompt += "  → Provide detailed, comprehensive recommendations with advanced tips\n"
+    else:
+        prompt += "- Subscription: Free user\n"
+        prompt += "  → Provide helpful but concise recommendations\n"
+
+    # Add the main instruction
+    prompt += f"""
+PERSONALIZATION REQUIREMENTS:
+- Tailor all recommendations based on the user's age, medical conditions, and symptoms
+- If PCOS is confirmed, emphasize insulin sensitivity, low-glycemic foods, and hormone balance
+- If Endometriosis is confirmed, prioritize anti-inflammatory approaches and pain management
+- Consider the user's current pain level ({log.pain_level}/10) when suggesting exercise intensity
+- Account for the reported mood ({log.mood}) in wellness recommendations
+- If cycle day is provided ({log.cycle_day}), consider menstrual cycle phase in recommendations
+
+Based on this comprehensive information, provide personalized recommendations in three categories with clear markdown formatting:
+
+## Diet
+[Provide specific dietary recommendations tailored to the user's conditions, age, and current symptoms - use bullet points]
+
+## Exercise  
+[Provide specific exercise recommendations considering pain level, age, conditions, and current symptoms - use bullet points]
+
+## Wellness Tips
+[Provide specific wellness recommendations based on mood, conditions, age, and overall health profile - use bullet points]
+
+Please format your response using proper markdown with headers (##) and bullet points (-) for each recommendation. Make the advice specific and actionable based on the user's individual profile and current symptoms."""
+
+    return prompt
 
 
 def parse_ai_response_to_markdown(content):
@@ -242,70 +310,26 @@ def get_default_recommendation_markdown(category):
     return defaults.get(category, '- Consult with your healthcare provider for personalized advice')
 
 
-def generate_fallback_recommendation(log):
+def generate_fallback_recommendation(log, user=None):
     """Generate condition-specific fallback recommendations in markdown format when AI fails."""
+    # If user is not provided, try to get it from the log
+    if not user:
+        user = User.query.get(log.user_id)
+    
     condition_lower = log.condition.lower() if log.condition else ""
     
-    if 'pcos' in condition_lower:
-        mock = {
-            "diet": """- Focus on low-glycemic foods like quinoa, sweet potatoes, and oats
-- Include lean proteins such as chicken, fish, and legumes
-- Add anti-inflammatory foods like berries, leafy greens, and nuts
-- Limit refined sugars and processed foods
-- Consider cinnamon and spearmint tea for hormonal balance""",
-            
-            "exercise": """- Combine cardio with strength training for insulin sensitivity
-- Try brisk walking, cycling, or swimming for 30 minutes daily
-- Include resistance exercises 2-3 times per week
-- Practice yoga for stress reduction and flexibility
-- Avoid overexercising which can increase cortisol""",
-            
-            "wellness": """- Manage stress through meditation and deep breathing
-- Ensure 7-8 hours of quality sleep nightly
-- Consider supplements like inositol and vitamin D (consult doctor first)
-- Track your menstrual cycle and symptoms
-- Build a support network of friends, family, or support groups"""
-        }
-    elif 'endometriosis' in condition_lower:
-        mock = {
-            "diet": """- Emphasize omega-3 rich foods like salmon, walnuts, and flaxseeds
-- Include high-fiber foods to support hormone balance
-- Add antioxidant-rich foods like berries, dark chocolate, and green tea
-- Limit red meat and processed foods which may increase inflammation
-- Consider an anti-inflammatory diet approach""",
-            
-            "exercise": """- Practice gentle yoga and stretching during flare-ups
-- Try low-impact activities like swimming or walking
-- Avoid high-intensity workouts during painful periods
-- Include pelvic floor exercises and core strengthening
-- Listen to your body and rest when needed""",
-            
-            "wellness": """- Use heat therapy for pain relief (heating pad, warm baths)
-- Practice stress reduction techniques like meditation
-- Ensure adequate rest and sleep
-- Consider acupuncture or massage therapy
-- Connect with endometriosis support groups for emotional support"""
-        }
+    # Determine primary condition based on profile and reported condition
+    has_pcos = user.has_pcos if user else False
+    has_endo = user.has_endometriosis if user else False
+    user_age = user.age if user else None
+    
+    # Customize recommendations based on confirmed conditions from profile
+    if has_pcos or 'pcos' in condition_lower:
+        mock = generate_pcos_recommendations(user_age, log.pain_level)
+    elif has_endo or 'endometriosis' in condition_lower:
+        mock = generate_endometriosis_recommendations(user_age, log.pain_level)
     else:
-        mock = {
-            "diet": """- Maintain a balanced diet rich in fruits and vegetables
-- Include whole grains and lean proteins
-- Limit processed foods and excessive sugar
-- Stay hydrated throughout the day
-- Consider consulting a nutritionist for personalized advice""",
-            
-            "exercise": """- Engage in regular physical activity suitable for your comfort level
-- Start with gentle activities like walking or stretching
-- Gradually increase intensity as tolerated
-- Include both cardio and strength training
-- Make movement enjoyable by choosing activities you like""",
-            
-            "wellness": """- Prioritize sleep hygiene and consistent sleep schedule
-- Practice stress management techniques
-- Maintain regular medical check-ups
-- Keep a health journal to track symptoms and triggers
-- Build a strong support system"""
-        }
+        mock = generate_general_recommendations(user_age, log.pain_level)
 
     # Save fallback recommendation to database
     try:
@@ -324,27 +348,124 @@ def generate_fallback_recommendation(log):
     return False, mock
 
 
+def generate_pcos_recommendations(age, pain_level):
+    """Generate age and pain-adjusted PCOS recommendations."""
+    base_diet = """- Focus on low-glycemic foods like quinoa, sweet potatoes, and oats
+- Include lean proteins such as chicken, fish, and legumes
+- Add anti-inflammatory foods like berries, leafy greens, and nuts
+- Limit refined sugars and processed foods
+- Consider cinnamon and spearmint tea for hormonal balance"""
+    
+    if age and age < 25:
+        base_diet += "\n- Ensure adequate calcium and iron for young adult development"
+    elif age and age > 35:
+        base_diet += "\n- Focus on bone health with calcium-rich foods and vitamin D"
+    
+    exercise_intensity = "moderate" if pain_level and pain_level > 6 else "regular"
+    base_exercise = f"""- Combine cardio with strength training for insulin sensitivity
+- Try brisk walking, cycling, or swimming for 30 minutes daily
+- Include resistance exercises 2-3 times per week
+- Practice yoga for stress reduction and flexibility"""
+    
+    if pain_level and pain_level > 7:
+        base_exercise += "\n- Focus on gentle stretching and restorative yoga during high pain days"
+    
+    base_wellness = """- Manage stress through meditation and deep breathing
+- Ensure 7-8 hours of quality sleep nightly
+- Consider supplements like inositol and vitamin D (consult doctor first)
+- Track your menstrual cycle and symptoms
+- Build a support network of friends, family, or support groups"""
+    
+    return {"diet": base_diet, "exercise": base_exercise, "wellness": base_wellness}
+
+
+def generate_endometriosis_recommendations(age, pain_level):
+    """Generate age and pain-adjusted Endometriosis recommendations."""
+    base_diet = """- Emphasize omega-3 rich foods like salmon, walnuts, and flaxseeds
+- Include high-fiber foods to support hormone balance
+- Add antioxidant-rich foods like berries, dark chocolate, and green tea
+- Limit red meat and processed foods which may increase inflammation
+- Consider an anti-inflammatory diet approach"""
+    
+    if age and age < 25:
+        base_diet += "\n- Ensure adequate nutrition for energy and healing"
+    elif age and age > 35:
+        base_diet += "\n- Focus on foods that support hormonal balance during potential perimenopause"
+    
+    base_exercise = """- Practice gentle yoga and stretching during flare-ups
+- Try low-impact activities like swimming or walking
+- Include pelvic floor exercises and core strengthening
+- Listen to your body and rest when needed"""
+    
+    if pain_level and pain_level > 7:
+        base_exercise = """- Focus on very gentle movement like stretching or short walks
+- Practice restorative yoga poses
+- Avoid high-intensity workouts during severe pain
+- Consider physical therapy for pelvic floor support"""
+    
+    base_wellness = """- Use heat therapy for pain relief (heating pad, warm baths)
+- Practice stress reduction techniques like meditation
+- Ensure adequate rest and sleep
+- Consider acupuncture or massage therapy
+- Connect with endometriosis support groups for emotional support"""
+    
+    return {"diet": base_diet, "exercise": base_exercise, "wellness": base_wellness}
+
+
+def generate_general_recommendations(age, pain_level):
+    """Generate general health recommendations adjusted for age and pain level."""
+    base_diet = """- Maintain a balanced diet rich in fruits and vegetables
+- Include whole grains and lean proteins
+- Limit processed foods and excessive sugar
+- Stay hydrated throughout the day
+- Consider consulting a nutritionist for personalized advice"""
+    
+    if age and age < 25:
+        base_diet += "\n- Focus on nutrients important for development and energy"
+    elif age and age > 35:
+        base_diet += "\n- Include foods rich in antioxidants and anti-inflammatory properties"
+    
+    base_exercise = """- Engage in regular physical activity suitable for your comfort level
+- Start with gentle activities like walking or stretching
+- Gradually increase intensity as tolerated
+- Include both cardio and strength training
+- Make movement enjoyable by choosing activities you like"""
+    
+    if pain_level and pain_level > 6:
+        base_exercise += "\n- Adjust exercise intensity based on pain levels\n- Focus on gentle stretching and movement on difficult days"
+    
+    base_wellness = """- Prioritize sleep hygiene and consistent sleep schedule
+- Practice stress management techniques
+- Maintain regular medical check-ups
+- Keep a health journal to track symptoms and triggers
+- Build a strong support system"""
+    
+    return {"diet": base_diet, "exercise": base_exercise, "wellness": base_wellness}
+
+
 @symptoms_bp.route('/', methods=['POST'])
 @jwt_required
 def log_symptom():
     """
-    Logs a user's symptoms and generates an AI-based recommendation.
+    Logs a user's symptoms and generates a personalized AI-based recommendation.
 
     This endpoint allows an authenticated user to log their symptoms. Upon logging,
-    it attempts to generate a recommendation using AI. The recommendation focuses on 
-    diet, exercise, and wellness based on the user's reported symptoms and condition.
+    it attempts to generate a recommendation using AI that takes into account both
+    the symptom log and the user's profile information (age, PCOS status, 
+    endometriosis status, etc.). The recommendation focuses on diet, exercise, 
+    and wellness based on the user's comprehensive health profile.
 
-    The function stores the symptom log in the database and tries to create an AI 
-    recommendation. If the AI recommendation generation fails, it still returns the 
-    logged symptoms with an error message regarding the AI failure.
+    The function stores the symptom log in the database and tries to create a 
+    personalized AI recommendation. If the AI recommendation generation fails, 
+    it provides personalized fallback recommendations based on the user's profile.
 
     Returns:
         JSON response containing a success message, log ID, and the AI-generated 
-        recommendation in clean markdown format. If AI recommendation generation fails, 
-        returns an error message along with the created log ID.
+        recommendation in clean markdown format. The recommendations are now 
+        personalized based on user profile information.
 
     Raises:
-        201: Symptom log created, with or without a successful recommendation.
+        201: Symptom log created, with personalized recommendation (AI or fallback).
     """
 
     data = request.get_json()
@@ -361,21 +482,21 @@ def log_symptom():
     db.session.add(log)
     db.session.commit()
 
-    # Generate AI recommendation automatically
+    # Generate personalized AI recommendation automatically
     success, result = generate_ai_recommendation_for_log(log)
     if success:
-        print("\n=== MARKDOWN RENDER TEST ===\n")
+        print("\n=== PERSONALIZED MARKDOWN RENDER TEST ===\n")
         print(result["markdown"])
-        print("\n============================\n")
+        print("\n========================================\n")
         return jsonify({
-            "message": "Symptom log created and recommendation generated",
+            "message": "Symptom log created and personalized recommendation generated",
             "log_id": log.id,
             "recommendation": result
         }), 201
     else:
-        # Still return the log creation but signal AI error
+        # Still return the log creation with personalized fallback recommendations
         return jsonify({
-            "message": "Symptom log created but failed to generate recommendation",
+            "message": "Symptom log created with personalized fallback recommendation",
             "log_id": log.id,
-            "recommendation": result  # This will contain the fallback markdown recommendations
+            "recommendation": result  # This will contain personalized fallback markdown recommendations
         }), 201
