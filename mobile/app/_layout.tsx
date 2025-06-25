@@ -9,7 +9,7 @@ import OnBoardScreen from '~/components/onboard';
 import { AsyncProvider } from '~/providers/async-provider';
 import ToastManager from 'toastify-react-native';
 
-export default function Layout() {
+const Layout = () => {
   const [loaded] = useFonts({
     Inter: require('@tamagui/font-inter/otf/Inter-Medium.otf'),
     InterBold: require('@tamagui/font-inter/otf/Inter-Bold.otf'),
@@ -60,4 +60,6 @@ export default function Layout() {
       <ToastManager />
     </AsyncProvider>
   );
-}
+};
+
+export default Layout;

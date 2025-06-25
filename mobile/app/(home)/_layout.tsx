@@ -1,7 +1,7 @@
 import { Redirect, Tabs, useSegments } from 'expo-router';
 import { Octicons, Foundation, AntDesign, Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '~/store/store';
-const headerToHide = Object.freeze(['[log_id]']);
+const headerToHide = Object.freeze(['[log_id]', 'change-password']);
 export default function Home() {
   const segment = useSegments();
   const lastSegment = segment[segment.length - 1];
@@ -22,6 +22,7 @@ export default function Home() {
             fontSize: 12,
             textAlign: 'center',
           },
+          animation: 'fade',
         }}>
         <Tabs.Screen
           name="index"
@@ -89,6 +90,7 @@ export default function Home() {
             headerShadowVisible: false,
             headerTitle: 'Profile',
             tabBarLabel: 'Profile',
+            headerShown: headerToHide.includes(lastSegment) ? false : true,
           }}
         />
       </Tabs>

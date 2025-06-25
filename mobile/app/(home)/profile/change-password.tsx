@@ -2,152 +2,140 @@ import {
   Button,
   Form,
   Input,
+  Label,
   ScrollView,
   SizableText,
   Spinner,
   View,
-  XStack,
   YStack,
 } from 'tamagui';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Controller, useForm } from 'react-hook-form';
 import { KeyboardAvoidingView, Platform } from 'react-native';
-import { Link, useRouter } from 'expo-router';
-import { CheckboxWithLabel } from '~/components/checkbox';
+import { useRouter } from 'expo-router';
 import { Eye, EyeOff } from '@tamagui/lucide-icons';
 import React from 'react';
-import { useRegister } from '~/hooks/api';
+import { useChangePassword } from '~/hooks/api';
 import { Toast } from 'toastify-react-native';
 import { HTTPError } from 'ky';
 
-const registerSchema = z
+const loginSchema = z
   .object({
-    fullName: z.string().min(1, 'Full name is required'),
-    email: z
+    newPassword: z
       .string({
-        required_error: 'Email is required',
+        required_error: 'New password is required',
       })
-      .email({
-        message: 'Invalid email address',
-      }),
-    password: z.string().min(6, 'Password must be at least 6 characters long'),
-    confirmPassword: z.string().min(6, 'Password must be at least 6 characters long'),
-    acceptTerms: z
-      .boolean({
-        required_error: 'You must accept the terms and conditions',
-      })
-      .refine((value) => value === true, {
-        message: 'You must accept the terms and conditions',
-      }),
+      .min(6, 'Password must be at least 6 characters long'),
+    currentPassword: z.string().min(6, 'Current password must be at least 6 characters long'),
+    confirmPassword: z.string().min(6, 'Confirm password must be at least 6 characters long'),
   })
-  .refine((value) => value.password === value.confirmPassword, {
+  .refine((check) => check.newPassword === check.confirmPassword, {
     path: ['confirmPassword'],
-    message: 'Passwords must match',
+    message: 'Passwords do not match',
   });
 
-const Register = () => {
-  const navigate = useRouter();
+const ChangePassword = () => {
   const [showPassword, setShowPassword] = React.useState(false);
+  const navigate = useRouter();
   const form = useForm({
-    resolver: zodResolver(registerSchema),
+    resolver: zodResolver(loginSchema),
     defaultValues: {
-      fullName: '',
-      email: '',
-      password: '',
-      confirmPassword: '',
+      newPassword: '',
+      currentPassword: '',
     },
   });
 
-  const register = useRegister();
+  const change_pass = useChangePassword();
 
   const onSubmit = form.handleSubmit((data) => {
-    register.mutate(data, {
-      onSuccess: () => {
-        Toast.success('Registration successful!');
-        navigate.replace('/(home)');
-      },
-      onError: async (error) => {
-        if (error instanceof HTTPError) {
-          const response = await error.response.json<{ error: string }>();
-          Toast.error(response.error);
-        }
-      },
-    });
+    change_pass.mutate(
+      { ...data, current_password: data.currentPassword, new_password: data.newPassword },
+      {
+        onSuccess: (data) => {
+          console.log(data);
+          Toast.success(data.message);
+          navigate.back();
+        },
+        onError: async (error) => {
+          if (error instanceof HTTPError) {
+            const response = await error.response.json<{ error: string }>();
+            console.log('CP, ', response.error);
+            Toast.error(response.error);
+          }
+        },
+      }
+    );
   });
 
   return (
     <ScrollView backgroundColor={'white'}>
       <YStack backgroundColor={'white'} flex={1}>
-        <YStack backgroundColor={'white'} flex={1} marginTop={'$10'}>
+        <YStack backgroundColor={'white'} flex={1}>
           <Form flex={1} onSubmit={onSubmit}>
             <YStack gap={10} backgroundColor={'white'} padding={'$3'}>
-              <XStack backgroundColor={'white'}>
+              <YStack>
+                <Label color={'#734F94'}>Current Password</Label>
                 <Controller
                   control={form.control}
-                  name="fullName"
-                  render={({ field: { value, onBlur, onChange } }) => {
-                    return (
-                      <Input
-                        borderWidth={0}
-                        backgroundColor={'#EDE8F2'}
-                        value={value}
-                        onBlur={onBlur}
-                        onChangeText={onChange}
-                        placeholder="Full Name"
-                        height={50}
-                        flex={1}
-                        borderStyle="unset"
-                        placeholderTextColor={'#734F94'}
-                      />
-                    );
-                  }}
-                />
-              </XStack>
-              {form.formState.errors.fullName ? (
-                <SizableText size={'$1'} backgroundColor={'white'} color={'red'}>
-                  {form.formState.errors.fullName.message}
-                </SizableText>
-              ) : null}
-
-              <XStack backgroundColor={'white'}>
-                <Controller
-                  control={form.control}
-                  name="email"
-                  render={({ field: { value, onBlur, onChange } }) => {
-                    return (
-                      <Input
-                        borderWidth={0}
-                        backgroundColor={'#EDE8F2'}
-                        value={value}
-                        onBlur={onBlur}
-                        onChangeText={onChange}
-                        placeholder="Email"
-                        height={50}
-                        flex={1}
-                        borderStyle="unset"
-                        placeholderTextColor={'#734F94'}
-                      />
-                    );
-                  }}
-                />
-              </XStack>
-              {form.formState.errors.email ? (
-                <SizableText size={'$1'} backgroundColor={'white'} color={'red'}>
-                  {form.formState.errors.email.message}
-                </SizableText>
-              ) : null}
-              <XStack>
-                <Controller
-                  control={form.control}
-                  name="password"
+                  name="currentPassword"
                   render={({ field: { value, onBlur, onChange } }) => {
                     return (
                       <View position="relative" flexDirection="row" flex={1}>
                         <Input
                           borderWidth={0}
                           value={value}
-                          backgroundColor={'#EDE8F2'}
+                          backgroundColor={'#F2F0F5'}
+                          onBlur={onBlur}
+                          onChangeText={onChange}
+                          secureTextEntry={!showPassword}
+                          textContentType="password"
+                          height={50}
+                          flex={1}
+                          borderStyle="unset"
+                          placeholderTextColor={'#734F94'}
+                        />
+                        {!showPassword && (
+                          <Eye
+                            onPress={() => setShowPassword(true)}
+                            position="absolute"
+                            top={15}
+                            right={5}
+                            color={'#734F94'}
+                          />
+                        )}
+                        {showPassword && (
+                          <EyeOff
+                            onPress={() => setShowPassword(false)}
+                            position="absolute"
+                            top={15}
+                            right={5}
+                            color={'#734F94'}
+                          />
+                        )}
+                      </View>
+                    );
+                  }}
+                />
+              </YStack>
+              {form.formState.errors.currentPassword ? (
+                <SizableText size={'$1'} backgroundColor={'white'} color={'red'}>
+                  {form.formState.errors.currentPassword.message}
+                </SizableText>
+              ) : null}
+
+              <YStack>
+                <Label color={'#734F94'}>New password</Label>
+                <Controller
+                  control={form.control}
+                  name="newPassword"
+                  render={({ field: { value, onBlur, onChange } }) => {
+                    return (
+                      <View position="relative" flexDirection="row" flex={1}>
+                        <Input
+                          borderWidth={0}
+                          value={value}
+                          backgroundColor={'#F2F0F5'}
                           onBlur={onBlur}
                           onChangeText={onChange}
                           secureTextEntry={!showPassword}
@@ -180,13 +168,15 @@ const Register = () => {
                     );
                   }}
                 />
-              </XStack>
-              {form.formState.errors.password ? (
+              </YStack>
+              {form.formState.errors.newPassword ? (
                 <SizableText size={'$1'} backgroundColor={'white'} color={'red'}>
-                  {form.formState.errors.password.message}
+                  {form.formState.errors.newPassword.message}
                 </SizableText>
               ) : null}
-              <XStack>
+
+              <YStack>
+                <Label color={'#734F94'}>Confirm password</Label>
                 <Controller
                   control={form.control}
                   name="confirmPassword"
@@ -196,12 +186,11 @@ const Register = () => {
                         <Input
                           borderWidth={0}
                           value={value}
-                          backgroundColor={'#EDE8F2'}
+                          backgroundColor={'#F2F0F5'}
                           onBlur={onBlur}
                           onChangeText={onChange}
                           secureTextEntry={!showPassword}
                           textContentType="password"
-                          placeholder="Confirm Password"
                           height={50}
                           flex={1}
                           borderStyle="unset"
@@ -229,59 +218,28 @@ const Register = () => {
                     );
                   }}
                 />
-              </XStack>
+              </YStack>
               {form.formState.errors.confirmPassword ? (
                 <SizableText size={'$1'} backgroundColor={'white'} color={'red'}>
                   {form.formState.errors.confirmPassword.message}
-                </SizableText>
-              ) : null}
-              <XStack>
-                <Controller
-                  control={form.control}
-                  name="acceptTerms"
-                  render={({ field: { value, onBlur, onChange } }) => {
-                    return (
-                      <CheckboxWithLabel
-                        labelSize={'$2'}
-                        onBlur={onBlur}
-                        onCheckedChange={onChange}
-                        value={value as any}
-                        label="I agree to the Terms of Service and Privacy Policy"
-                      />
-                    );
-                  }}
-                />
-              </XStack>
-              {form.formState.errors.acceptTerms ? (
-                <SizableText size={'$1'} backgroundColor={'white'} color={'red'}>
-                  {form.formState.errors.acceptTerms.message}
                 </SizableText>
               ) : null}
               <YStack>
                 <KeyboardAvoidingView
                   style={{ flex: 1 }}
                   behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-                  <Form.Trigger disabled={register.isPending} asChild>
+                  <Form.Trigger disabled={change_pass.isPending} asChild>
                     <Button
-                      icon={register.isPending ? <Spinner size="small" color={'white'} /> : null}
+                      icon={change_pass.isPending ? <Spinner size="small" color={'white'} /> : null}
                       color={'white'}
                       backgroundColor={'#AD73EB'}
                       width={'100%'}
                       borderRadius={'$10'}>
-                      Register
+                      Save
                     </Button>
                   </Form.Trigger>
                 </KeyboardAvoidingView>
               </YStack>
-              <XStack gap={4} justifyContent={'center'} alignItems={'center'}>
-                <SizableText size={'$2'} color={'#734F94'}>
-                  Already have an Account?
-                </SizableText>
-                <Link href={'/login'}>
-                  <SizableText color={'#734f94'}>Sign In</SizableText>
-                </Link>
-              </XStack>
-              <View backgroundColor={'red'} style={{ flex: 1 }} />
             </YStack>
           </Form>
         </YStack>
@@ -290,4 +248,4 @@ const Register = () => {
   );
 };
 
-export default Register;
+export default ChangePassword;

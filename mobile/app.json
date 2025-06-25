@@ -12,6 +12,14 @@
     "plugins": [
       "expo-router",
       [
+        "react-native-bottom-tabs",
+        {
+          "ios": {
+            "useFrameworks": "static"
+          }
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "backgroundColor": "#9942F0",

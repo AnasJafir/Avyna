@@ -43,14 +43,11 @@ const Login = () => {
       password: '',
     },
   });
-  const user = useAuthStore();
-
   const login = useLogin();
 
   const onSubmit = form.handleSubmit((data) => {
     login.mutate(data, {
-      onSuccess: (data) => {
-        user.setUser(data);
+      onSuccess: () => {
         navigate.push('/(home)');
       },
       onError: async (error) => {

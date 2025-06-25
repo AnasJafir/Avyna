@@ -4,7 +4,6 @@ import { HTTPError } from 'ky';
 import { Controller, useForm } from 'react-hook-form';
 import { KeyboardAvoidingView, Platform } from 'react-native';
 import {
-  Button,
   Form,
   Input,
   ScrollView,
@@ -18,6 +17,7 @@ import {
 } from 'tamagui';
 import { Toast } from 'toastify-react-native';
 import { z } from 'zod';
+import { Button } from '~/components/button';
 import { CheckboxWithLabel } from '~/components/checkbox';
 import { useCreateUserSymptoms } from '~/hooks/api';
 import { useAuthStore } from '~/store/store';
@@ -351,12 +351,8 @@ const Track = () => {
               <Form.Trigger disabled={symptoms.isPending} asChild>
                 <Button
                   icon={symptoms.isPending ? <Spinner size="small" color={'white'} /> : null}
-                  color={'white'}
-                  backgroundColor={'#AD73EB'}
-                  width={'100%'}
-                  borderRadius={'$10'}>
-                  Submit
-                </Button>
+                  title="Submit"
+                />
               </Form.Trigger>
             </KeyboardAvoidingView>
           </YStack>

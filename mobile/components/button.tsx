@@ -8,10 +8,14 @@ type ButtonProps = {
 
 export const Button = forwardRef<TamaguiElement, ButtonProps>(({ title, ...tButtonProps }, ref) => {
   return (
-    <TButton {...tButtonProps} ref={ref}>
+    <TButton
+      {...tButtonProps}
+      ref={ref}
+      backgroundColor={'#AD73EB'}
+      color={'white'}
+      borderRadius={'$10'}>
       {title}
     </TButton>
   );
 });
-
 Button.displayName = 'Button';
