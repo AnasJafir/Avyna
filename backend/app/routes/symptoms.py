@@ -5,6 +5,8 @@ from app.models.symptom_log import SymptomLog
 from app.models.ai_recommendation import AIRecommendation
 from app.models.user import User
 from datetime import datetime
+from datetime import timedelta
+from sqlalchemy import func
 import google.generativeai as genai
 import openai
 import re
@@ -500,3 +502,289 @@ def log_symptom():
             "log_id": log.id,
             "recommendation": result  # This will contain personalized fallback markdown recommendations
         }), 201
+        
+# Add these routes to your symptoms.py file after the existing POST route
+
+@symptoms_bp.route('/', methods=['GET'])
+@jwt_required
+def get_user_symptom_logs():
+    """
+    Retrieve all symptom logs for the authenticated user with optional filtering.
+    
+    Query parameters:
+    - limit: Number of logs to return (default: 50, max: 100)
+    - offset: Number of logs to skip for pagination (default: 0)
+    - start_date: Filter logs from this date (format: YYYY-MM-DD)
+    - end_date: Filter logs until this date (format: YYYY-MM-DD)
+    - condition: Filter by specific condition
+    - sort: Sort order - 'desc' for newest first, 'asc' for oldest first (default: desc)
+    
+    Returns:
+        JSON response containing user's symptom logs with recommendations
+    """
+    # Get query parameters
+    limit = min(int(request.args.get('limit', 50)), 100)  # Max 100 logs per request
+    offset = int(request.args.get('offset', 0))
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+    condition = request.args.get('condition')
+    sort_order = request.args.get('sort', 'desc')
+    
+    # Build query
+    query = SymptomLog.query.filter_by(user_id=g.current_user.id)
+    
+    # Apply date filters
+    if start_date:
+        try:
+            start_date_obj = datetime.strptime(start_date, '%Y-%m-%d').date()
+            query = query.filter(SymptomLog.date >= start_date_obj)
+        except ValueError:
+            return jsonify({"error": "Invalid start_date format. Use YYYY-MM-DD"}), 400
+    
+    if end_date:
+        try:
+            end_date_obj = datetime.strptime(end_date, '%Y-%m-%d').date()
+            query = query.filter(SymptomLog.date <= end_date_obj)
+        except ValueError:
+            return jsonify({"error": "Invalid end_date format. Use YYYY-MM-DD"}), 400
+    
+    # Apply condition filter
+    if condition:
+        query = query.filter(SymptomLog.condition.ilike(f'%{condition}%'))
+    
+    # Apply sorting
+    if sort_order.lower() == 'asc':
+        query = query.order_by(SymptomLog.date.asc(), SymptomLog.id.asc())
+    else:
+        query = query.order_by(SymptomLog.date.desc(), SymptomLog.id.desc())
+    
+    # Apply pagination
+    logs = query.offset(offset).limit(limit).all()
+    
+    # Convert to JSON format
+    logs_data = []
+    for log in logs:
+        log_data = {
+            "id": log.id,
+            "date": log.date.isoformat(),
+            "condition": log.condition,
+            "symptoms": log.symptoms,
+            "pain_level": log.pain_level,
+            "mood": log.mood,
+            "cycle_day": log.cycle_day,
+            "notes": log.notes,
+            "recommendation": None
+        }
+        
+        # Include recommendation if exists
+        if log.recommendation:
+            log_data["recommendation"] = {
+                "diet": log.recommendation.diet,
+                "exercise": log.recommendation.exercise,
+                "wellness": log.recommendation.wellness,
+                "generated_at": log.recommendation.generated_at.isoformat(),
+                "markdown": f"""### 🥗 Diet
+{log.recommendation.diet}
+
+### 🏃 Exercise
+{log.recommendation.exercise}
+
+### 🧘 Wellness
+{log.recommendation.wellness}"""
+            }
+        
+        logs_data.append(log_data)
+    
+    # Get total count for pagination info
+    total_count = SymptomLog.query.filter_by(user_id=g.current_user.id).count()
+    
+    return jsonify({
+        "logs": logs_data,
+        "pagination": {
+            "total": total_count,
+            "limit": limit,
+            "offset": offset,
+            "has_more": offset + limit < total_count
+        }
+    }), 200
+
+
+@symptoms_bp.route('/<int:log_id>', methods=['GET'])
+@jwt_required
+def get_symptom_log_by_id(log_id):
+    """
+    Retrieve a specific symptom log by ID for the authenticated user.
+    
+    Args:
+        log_id: The ID of the symptom log to retrieve
+        
+    Returns:
+        JSON response containing the specific symptom log with recommendation
+    """
+    log = SymptomLog.query.filter_by(
+        id=log_id, 
+        user_id=g.current_user.id
+    ).first()
+    
+    if not log:
+        return jsonify({"error": "Symptom log not found"}), 404
+    
+    log_data = {
+        "id": log.id,
+        "date": log.date.isoformat(),
+        "condition": log.condition,
+        "symptoms": log.symptoms,
+        "pain_level": log.pain_level,
+        "mood": log.mood,
+        "cycle_day": log.cycle_day,
+        "notes": log.notes,
+        "recommendation": None
+    }
+    
+    # Include recommendation if exists
+    if log.recommendation:
+        log_data["recommendation"] = {
+            "diet": log.recommendation.diet,
+            "exercise": log.recommendation.exercise,
+            "wellness": log.recommendation.wellness,
+            "generated_at": log.recommendation.generated_at.isoformat(),
+            "markdown": f"""### 🥗 Diet
+{log.recommendation.diet}
+
+### 🏃 Exercise
+{log.recommendation.exercise}
+
+### 🧘 Wellness
+{log.recommendation.wellness}"""
+        }
+    
+    return jsonify({"log": log_data}), 200
+
+
+@symptoms_bp.route('/recent', methods=['GET'])
+@jwt_required
+def get_recent_symptom_logs():
+    """
+    Retrieve the most recent symptom logs for the authenticated user.
+    Useful for dashboard/summary views.
+    
+    Query parameters:
+    - days: Number of days to look back (default: 7, max: 30)
+    
+    Returns:
+        JSON response containing recent symptom logs
+    """
+    days = min(int(request.args.get('days', 7)), 30)  # Max 30 days
+    
+    from datetime import timedelta
+    cutoff_date = datetime.utcnow().date() - timedelta(days=days)
+    
+    logs = SymptomLog.query.filter(
+        SymptomLog.user_id == g.current_user.id,
+        SymptomLog.date >= cutoff_date
+    ).order_by(SymptomLog.date.desc()).all()
+    
+    logs_data = []
+    for log in logs:
+        log_data = {
+            "id": log.id,
+            "date": log.date.isoformat(),
+            "condition": log.condition,
+            "symptoms": log.symptoms,
+            "pain_level": log.pain_level,
+            "mood": log.mood,
+            "cycle_day": log.cycle_day,
+            "notes": log.notes,
+            "has_recommendation": log.recommendation is not None
+        }
+        logs_data.append(log_data)
+    
+    return jsonify({
+        "logs": logs_data,
+        "period_days": days,
+        "total_logs": len(logs_data)
+    }), 200
+
+
+@symptoms_bp.route('/analytics', methods=['GET'])
+@jwt_required
+def get_symptom_analytics():
+    """
+    Get analytics and insights about the user's symptom patterns.
+    
+    Query parameters:
+    - days: Number of days to analyze (default: 30, max: 90)
+    
+    Returns:
+        JSON response containing symptom analytics
+    """
+    days = min(int(request.args.get('days', 30)), 90)  # Max 90 days
+    
+    from datetime import timedelta
+    from sqlalchemy import func
+    
+    cutoff_date = datetime.utcnow().date() - timedelta(days=days)
+    
+    # Get logs for analysis
+    logs = SymptomLog.query.filter(
+        SymptomLog.user_id == g.current_user.id,
+        SymptomLog.date >= cutoff_date
+    ).all()
+    
+    if not logs:
+        return jsonify({
+            "message": "No symptom logs found for the specified period",
+            "analytics": None
+        }), 200
+    
+    # Calculate analytics
+    total_logs = len(logs)
+    
+    # Pain level analytics
+    pain_levels = [log.pain_level for log in logs if log.pain_level is not None]
+    avg_pain = sum(pain_levels) / len(pain_levels) if pain_levels else 0
+    max_pain = max(pain_levels) if pain_levels else 0
+    
+    # Mood analytics
+    moods = [log.mood for log in logs if log.mood]
+    mood_counts = {}
+    for mood in moods:
+        mood_counts[mood] = mood_counts.get(mood, 0) + 1
+    
+    # Condition analytics
+    conditions = [log.condition for log in logs if log.condition]
+    condition_counts = {}
+    for condition in conditions:
+        condition_counts[condition] = condition_counts.get(condition, 0) + 1
+    
+    # Most common symptoms
+    all_symptoms = []
+    for log in logs:
+        if log.symptoms:
+            # Split symptoms by common delimiters
+            symptoms = [s.strip() for s in log.symptoms.replace(',', ';').split(';')]
+            all_symptoms.extend(symptoms)
+    
+    symptom_counts = {}
+    for symptom in all_symptoms:
+        if symptom:  # Skip empty strings
+            symptom_counts[symptom.lower()] = symptom_counts.get(symptom.lower(), 0) + 1
+    
+    # Get top 5 symptoms
+    top_symptoms = sorted(symptom_counts.items(), key=lambda x: x[1], reverse=True)[:5]
+    
+    analytics = {
+        "period_days": days,
+        "total_logs": total_logs,
+        "pain_analytics": {
+            "average_pain": round(avg_pain, 1),
+            "max_pain": max_pain,
+            "total_pain_entries": len(pain_levels)
+        },
+        "mood_distribution": mood_counts,
+        "condition_distribution": condition_counts,
+        "top_symptoms": [{"symptom": symptom, "count": count} for symptom, count in top_symptoms],
+        "logging_frequency": round(total_logs / days, 2)  # logs per day
+    }
+    
+    return jsonify({"analytics": analytics}), 200
