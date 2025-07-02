@@ -5,6 +5,12 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from app import db
 from app.models.user import User
 from app.utils.auth_decorator import jwt_required
+from app.utils.cloudinary_utils import (
+    upload_profile_picture, 
+    delete_profile_picture, 
+    validate_image_file, 
+    validate_base64_image
+)
 
 profile_bp = Blueprint('profile', __name__)
 
@@ -79,6 +85,146 @@ def update_profile():
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": "Profile update failed. Please try again."}), 500
+
+
+@profile_bp.route('/debug-upload', methods=['POST'])
+@jwt_required
+def debug_upload():
+    """Debug endpoint to check request format"""
+    print(f"DEBUG: Content-Type: {request.content_type}")
+    print(f"DEBUG: Headers: {dict(request.headers)}")
+    print(f"DEBUG: Files: {list(request.files.keys())}")
+    
+    if request.files:
+        for key, file in request.files.items():
+            print(f"DEBUG: File key: {key}, filename: {file.filename}, content_type: {file.content_type}")
+    
+    if request.json:
+        print(f"DEBUG: JSON data: {request.json}")
+    
+    return jsonify({
+        "content_type": request.content_type,
+        "files": list(request.files.keys()),
+        "has_json": request.json is not None
+    }), 200
+
+
+@profile_bp.route('/upload-picture', methods=['POST'])
+@jwt_required
+def upload_profile_picture_route():
+    """Upload or update user's profile picture"""
+    user = g.current_user
+    
+    try:
+        # Check if request contains multipart file or JSON with base64
+        if request.files:
+            # Handle file upload (check for files directly instead of content-type)
+            print(f"DEBUG: Handling file upload for user {user.id}")
+            
+            if 'profile_picture' not in request.files:
+                print("DEBUG: No 'profile_picture' key in request.files")
+                return jsonify({"error": "No file provided"}), 400
+            
+            file = request.files['profile_picture']
+            print(f"DEBUG: File received - filename: {file.filename}, content_type: {file.content_type}")
+            
+            if file.filename == '':
+                print("DEBUG: Empty filename")
+                return jsonify({"error": "No file selected"}), 400
+            
+            # Validate file
+            validation = validate_image_file(file)
+            print(f"DEBUG: Validation result: {validation}")
+            
+            if not validation['valid']:
+                print(f"DEBUG: File validation failed: {validation['error']}")
+                return jsonify({"error": validation['error']}), 400
+            
+            # Upload to Cloudinary
+            print("DEBUG: Starting Cloudinary upload...")
+            upload_result = upload_profile_picture(file, user.id)
+            print(f"DEBUG: Cloudinary upload result: {upload_result}")
+            
+        else:
+            # Handle JSON with base64 image
+            print(f"DEBUG: Handling base64 upload for user {user.id}")
+            data = request.get_json()
+            
+            if not data or 'image' not in data:
+                return jsonify({"error": "No image data provided"}), 400
+            
+            # Validate base64 image
+            validation = validate_base64_image(data['image'])
+            print(f"DEBUG: Base64 validation result: {validation}")
+            
+            if not validation['valid']:
+                return jsonify({"error": validation['error']}), 400
+            
+            # Upload to Cloudinary
+            upload_result = upload_profile_picture(data['image'], user.id)
+        
+        # Check for upload errors
+        if 'error' in upload_result:
+            print(f"DEBUG: Upload error: {upload_result['error']}")
+            return jsonify({"error": upload_result['error']}), 500
+        
+        # Delete old profile picture if exists
+        if user.profile_picture_public_id:
+            print(f"DEBUG: Deleting old picture: {user.profile_picture_public_id}")
+            delete_profile_picture(user.profile_picture_public_id)
+        
+        # Update user record
+        try:
+            user.profile_picture_url = upload_result['url']
+            user.profile_picture_public_id = upload_result['public_id']
+            db.session.commit()
+            print(f"DEBUG: Database updated successfully")
+            
+            return jsonify({
+                "message": "Profile picture updated successfully",
+                "profile_picture_url": upload_result['url'],
+                "user": user.to_dict()
+            }), 200
+            
+        except Exception as e:
+            print(f"DEBUG: Database update error: {str(e)}")
+            db.session.rollback()
+            # Try to delete the uploaded image since database update failed
+            delete_profile_picture(upload_result['public_id'])
+            return jsonify({"error": "Failed to update profile picture. Please try again."}), 500
+    
+    except Exception as e:
+        print(f"DEBUG: Unexpected error in upload_profile_picture_route: {str(e)}")
+        return jsonify({"error": "An unexpected error occurred"}), 500
+
+
+@profile_bp.route('/delete-picture', methods=['DELETE'])
+@jwt_required
+def delete_profile_picture_route():
+    """Delete user's profile picture"""
+    user = g.current_user
+    
+    if not user.profile_picture_public_id:
+        return jsonify({"error": "No profile picture to delete"}), 400
+    
+    # Delete from Cloudinary
+    if delete_profile_picture(user.profile_picture_public_id):
+        try:
+            # Update user record
+            user.profile_picture_url = None
+            user.profile_picture_public_id = None
+            db.session.commit()
+            
+            return jsonify({
+                "message": "Profile picture deleted successfully",
+                "user": user.to_dict()
+            }), 200
+            
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({"error": "Failed to delete profile picture. Please try again."}), 500
+    else:
+        return jsonify({"error": "Failed to delete profile picture from cloud storage"}), 500
 
 
 @profile_bp.route('/change-password', methods=['PUT'])

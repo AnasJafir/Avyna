@@ -1,6 +1,6 @@
 # --- Routes: AI Recommendation Generation ---
 # app/routes/recommendations.py
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, request, jsonify, current_app, g
 from app.utils.auth_decorator import jwt_required
 from app.models.symptom_log import SymptomLog
 from app.models.ai_recommendation import AIRecommendation
