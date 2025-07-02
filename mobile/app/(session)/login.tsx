@@ -18,7 +18,6 @@ import { Link, useRouter } from 'expo-router';
 import { Eye, EyeOff } from '@tamagui/lucide-icons';
 import React from 'react';
 import { useLogin } from '~/hooks/api';
-import { useAuthStore } from '~/store/store';
 import { Toast } from 'toastify-react-native';
 import { HTTPError } from 'ky';
 
@@ -48,7 +47,7 @@ const Login = () => {
   const onSubmit = form.handleSubmit((data) => {
     login.mutate(data, {
       onSuccess: () => {
-        navigate.push('/(home)');
+        navigate.push('/(home)/track');
       },
       onError: async (error) => {
         if (error instanceof HTTPError) {

@@ -65,7 +65,7 @@ const Register = () => {
     register.mutate(data, {
       onSuccess: () => {
         Toast.success('Registration successful!');
-        navigate.replace('/(home)');
+        navigate.replace('/(home)/track');
       },
       onError: async (error) => {
         if (error instanceof HTTPError) {
