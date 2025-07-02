@@ -29,3 +29,7 @@ requests==2.31.0
 
 # Other dependencies
 openai==0.27.8
+
+# Cloudinary for media storage
+cloudinary==1.36.0
+pillow==10.0.0
