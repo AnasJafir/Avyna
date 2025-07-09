@@ -8,6 +8,7 @@ from werkzeug.utils import secure_filename
 import base64
 import io
 from PIL import Image
+import uuid
 
 def configure_cloudinary():
     """Configure Cloudinary with environment variables"""
@@ -20,25 +21,24 @@ def configure_cloudinary():
 
 def upload_profile_picture(file_data, user_id):
     """
-    Upload profile picture to Cloudinary
-    
+    Upload profile picture to Cloudinary with a unique public_id
+
     Args:
         file_data: Either file object or base64 string
-        user_id: User ID for unique naming
-        
+        user_id: User ID (used for naming context)
+
     Returns:
         dict: Contains 'url' and 'public_id' or 'error'
     """
     try:
         configure_cloudinary()
-        
-        # Create a unique public_id based on user_id
-        public_id = f"user_{user_id}"
-        
-        # Upload options
+
+        # Use a unique public_id per upload
+        public_id = f"user_{user_id}_{uuid.uuid4().hex}"
+
         upload_options = {
             'public_id': public_id,
-            'overwrite': True,  # Replace existing image
+            'overwrite': False,  # Never overwrite
             'resource_type': 'image',
             'transformation': [
                 {'width': 300, 'height': 300, 'crop': 'fill', 'gravity': 'face'},
@@ -47,31 +47,23 @@ def upload_profile_picture(file_data, user_id):
             ],
             'folder': 'avyna/profile_pictures'
         }
-        
-        # Handle different input types
+
         if isinstance(file_data, str):
-            # Handle base64 string
             if file_data.startswith('data:image'):
-                # Remove data:image/jpeg;base64, prefix
                 file_data = file_data.split(',')[1]
-            
-            # Decode base64
             image_data = base64.b64decode(file_data)
-            
-            # Upload from base64
             result = cloudinary.uploader.upload(
                 f"data:image/jpg;base64,{base64.b64encode(image_data).decode()}",
                 **upload_options
             )
         else:
-            # Handle file object
             result = cloudinary.uploader.upload(file_data, **upload_options)
-        
+
         return {
             'url': result['secure_url'],
             'public_id': result['public_id']
         }
-        
+
     except Exception as e:
         print(f"Cloudinary upload error: {str(e)}")
         return {'error': f'Image upload failed: {str(e)}'}
