@@ -6,7 +6,7 @@ import {
   QueryCache,
 } from '@tanstack/react-query';
 import * as Network from 'expo-network';
-import { useRouter } from 'expo-router';
+import { usePathname, useRouter } from 'expo-router';
 import { HTTPError } from 'ky';
 import React from 'react';
 import { AppState, Platform } from 'react-native';
@@ -27,6 +27,7 @@ const onAppStateChange = (status: AppStateStatus) => {
 
 export const AsyncProvider = ({ children }: { children: React.ReactNode }) => {
   const navigation = useRouter();
+  const pathname = usePathname();
   const [queryClient] = React.useState(
     () =>
       new QueryClient({
@@ -35,7 +36,7 @@ export const AsyncProvider = ({ children }: { children: React.ReactNode }) => {
             onError: (error) => {
               if (error instanceof HTTPError) {
                 const statusCode = error.response.status;
-                if (statusCode === 401) {
+                if (statusCode === 401 && pathname !== '/login') {
                   navigation.push('/login');
                 }
               }

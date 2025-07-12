@@ -13,7 +13,7 @@ POST {{EXPO_PUBLIC_BASE_URL}}/auth/login
 Content-Type: application/json
 
 {
-  "email": "example40@gmail.com",
+  "email": "example4@gmail.com",
   "password": "password"
 }
 
@@ -28,22 +28,42 @@ GET {{EXPO_PUBLIC_BASE_URL}}/profile/
 Content-Type: application/json
 Authorization: Bearer {{token}}
 
-### Symptoms
+### Create Symptoms
 POST {{EXPO_PUBLIC_BASE_URL}}/symptoms/
 Content-Type: application/json
 Authorization: Bearer {{token}}
 
 {
-  "user_id": 7,
+  "user_id": 1,
   "condition":"PCOS",
-  "symptoms":"Body weekness",
-  "pain_level": 7,
+  "symptoms":"Body Pain",
+  "pain_level": 8,
   "mood":"moody",
-  "cycle_day": 4,
+  "cycle_day": 14,
   "notes":""
 }
 
+### Get Symptoms
+GET {{EXPO_PUBLIC_BASE_URL}}/symptoms/?limit=10&offset=0
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+### Get Symptoms {{log_id}}
+GET {{EXPO_PUBLIC_BASE_URL}}/symptoms/1
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+### Get Recent Symptoms
+GET {{EXPO_PUBLIC_BASE_URL}}/symptoms/recent
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+### Get Recent Symptoms
+GET {{EXPO_PUBLIC_BASE_URL}}/symptoms/analytics
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
 ### Recommendations
-GET {{EXPO_PUBLIC_BASE_URL}}/recommendations/11
+GET {{EXPO_PUBLIC_BASE_URL}}/recommendations/1
 Content-Type: application/json
 Authorization: Bearer {{token}}
