@@ -22,6 +22,17 @@ const TrackLayout = () => {
 					},
 				}}
 			/>
+			<Stack.Screen
+				name="symptom-history"
+				options={{
+					title: "Symptoms History",
+					headerShadowVisible: false,
+					headerBackVisible: true,
+					headerTitleStyle: {
+						fontFamily: "ManropeSemiBold",
+					},
+				}}
+			/>
 		</Stack>
 	);
 };

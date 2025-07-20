@@ -22,7 +22,7 @@ import {
 import { Toast } from "toastify-react-native";
 import { match } from "ts-pattern";
 import { z } from "zod";
-import { Button } from "~/components/button";
+import { CButton } from "~/components/button";
 import { CheckboxWithLabel } from "~/components/checkbox";
 import {
 	useEditProfile,
@@ -164,7 +164,7 @@ export const ProfileView = ({
 			</YStack>
 			<View>
 				{!showProfile.showProfile && (
-					<Button
+					<CButton
 						title="Update Profile"
 						onPress={() => showProfile.setShowProfile(EnumProfile.EditProfile)}
 					/>
@@ -374,7 +374,7 @@ export const EditProfileView = () => {
 						</XStack>
 
 						<YStack gap={2}>
-							<Button
+							<CButton
 								width={200}
 								title="Change Password"
 								onPress={() => router.push("/(home)/profile/change-password")}
@@ -384,7 +384,7 @@ export const EditProfileView = () => {
 								behavior={Platform.OS === "ios" ? "padding" : "height"}
 							>
 								<Form.Trigger disabled={edit.isPending} asChild>
-									<Button
+									<CButton
 										icon={
 											edit.isPending ? (
 												<Spinner size="small" color={"white"} />

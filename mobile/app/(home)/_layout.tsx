@@ -30,7 +30,7 @@ export default function Home() {
 						) : (
 							<Octicons name={"home"} size={30} color={"#AF73EA"} style={{}} />
 						),
-					headerTitle: "Symptoms History",
+					headerTitle: "Home",
 					tabBarLabel: "Home",
 				}}
 			/>

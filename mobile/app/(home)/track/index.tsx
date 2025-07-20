@@ -1,9 +1,11 @@
+import { MaterialIcons } from "@expo/vector-icons";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "expo-router";
 import { HTTPError } from "ky";
 import { Controller, useForm } from "react-hook-form";
 import { KeyboardAvoidingView, Platform } from "react-native";
 import {
+	ButtonIcon,
 	Form,
 	Input,
 	ScrollView,
@@ -17,10 +19,11 @@ import {
 } from "tamagui";
 import { Toast } from "toastify-react-native";
 import { z } from "zod";
-import { Button } from "~/components/button";
+import { CButton } from "~/components/button";
 import { CheckboxWithLabel } from "~/components/checkbox";
 import { useCreateUserSymptoms } from "~/hooks/api";
 import { useAuthStore } from "~/store/store";
+import { Button } from "~/tamagui.config";
 import { decodeJwt } from "~/utils";
 
 const symptomsSchema = z.object({
@@ -352,13 +355,24 @@ const Track = () => {
 							/>
 						</XStack>
 					</YStack>
+					<YStack>
+						<Button
+							onPress={() => navigate.push("/(home)/track/symptom-history")}
+							width={"$14"}
+							color={"black"}
+							backgroundColor={"#EADDFF"}
+						>
+							<MaterialIcons name="stars" size={24} color="#4F378A" />
+							<SizableText>Symptom history</SizableText>
+						</Button>
+					</YStack>
 					<YStack marginBottom={"$4"}>
 						<KeyboardAvoidingView
 							style={{ flex: 1, backgroundColor: "#fff" }}
 							behavior={Platform.OS === "ios" ? "padding" : "height"}
 						>
 							<Form.Trigger disabled={symptoms.isPending} asChild>
-								<Button
+								<CButton
 									icon={
 										symptoms.isPending ? (
 											<Spinner size="small" color={"white"} />

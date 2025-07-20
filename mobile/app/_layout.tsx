@@ -22,6 +22,7 @@ const Layout = () => {
 	});
 
 	const onBoard = useOnboardStore();
+	console.log(" ");
 
 	React.useEffect(() => {
 		if (loaded) {
