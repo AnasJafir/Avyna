@@ -35,6 +35,7 @@ export const useRegister = () => {
 		},
 		onSuccess: (data) => {
 			user.setUser(data);
+			user.setIsLoggedIn(true);
 		},
 	});
 };
@@ -57,6 +58,7 @@ export const useLogin = () => {
 		},
 		onSuccess: (data) => {
 			user.setUser(data);
+			user.setIsLoggedIn(true);
 		},
 	});
 };

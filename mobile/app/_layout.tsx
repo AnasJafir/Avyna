@@ -3,9 +3,8 @@ import { SplashScreen, Stack } from "expo-router";
 import React from "react";
 import { TamaguiProvider } from "tamagui";
 import ToastManager from "toastify-react-native";
-import OnBoardScreen from "~/components/onboard";
 import { AsyncProvider } from "~/providers/async-provider";
-import { useOnboardStore } from "~/store/store";
+import { useAuthStore, useOnboardStore } from "~/store/store";
 import config from "../tamagui.config";
 
 const Layout = () => {
@@ -22,7 +21,7 @@ const Layout = () => {
 	});
 
 	const onBoard = useOnboardStore();
-	console.log(" ");
+	const auth = useAuthStore();
 
 	React.useEffect(() => {
 		if (loaded) {
@@ -30,30 +29,20 @@ const Layout = () => {
 		}
 	}, [loaded]);
 
-	React.useLayoutEffect(() => {
-		const timout = setTimeout(() => {
-			onBoard.setHasSeen(true);
-		}, 5000);
-		return () => clearTimeout(timout);
-	}, [onBoard]);
-
 	if (!loaded) return null;
-
-	if (onBoard.hasSeen === undefined) return null;
-	if (onBoard.hasSeen === false) {
-		return (
-			<TamaguiProvider config={config}>
-				<OnBoardScreen />
-			</TamaguiProvider>
-		);
-	}
+	console.log(onBoard.hasSeen.seen);
 
 	return (
 		<AsyncProvider>
 			<TamaguiProvider config={config}>
 				<Stack screenOptions={{ headerShown: false }}>
-					<Stack.Screen name="(home)" />
-					<Stack.Screen name="(session)" />
+					<Stack.Screen name="(onboarding)" />
+					<Stack.Protected guard={onBoard.hasSeen.seen}>
+						<Stack.Screen name="(session)" />
+					</Stack.Protected>
+					<Stack.Protected guard={onBoard.hasSeen.seen && auth.isLoggedIn}>
+						<Stack.Screen name="(home)" />
+					</Stack.Protected>
 					<Stack.Screen name="+not-found" />
 				</Stack>
 			</TamaguiProvider>
